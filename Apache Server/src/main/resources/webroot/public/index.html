@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Services Framework</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <h1 style="margin:0;">AREP — Micro Web Framework</h1>
+        <div style="font-size:0.85rem; color:#555;">
+            Hola, <strong id="sessionUser">...</strong> &nbsp;
+            <button onclick="doLogout()" style="padding:4px 10px; font-size:0.8rem; cursor:pointer;">
+                Cerrar sesión
+            </button>
+        </div>
+    </div>
+
+    <p class="subtitle">Web Framework Development for REST Services and Static File Management</p>
+    <p class="author">Yojhan Toro Rivera</p>
+
+    <h2>Endpoints disponibles</h2>
+    <ul>
+        <li>
+            <button onclick="goTo('/App/pi')">GET /App/pi</button>
+            — Retorna el valor de π
+        </li>
+        <li>
+            <button onclick="goTo('/App/e')">GET /App/e</button>
+            — Retorna el número de Euler
+        </li>
+        <li>
+            <input type="text" id="helloName" value="Pedro"
+                   style="width:90px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
+            <button onclick="goTo('/App/hello?name=' + encodeURIComponent(document.getElementById('helloName').value || 'mundo'))">
+                GET /App/hello
+            </button>
+            — Saluda por nombre
+        </li>
+    </ul>
+
+    <h2>Control del servidor</h2>
+    <p style="margin-bottom:10px; color:#666; font-size:0.9rem;">
+        Envía una señal de apagado al servidor.
+    </p>
+    <button class="btn-danger" onclick="shutdownServer()">Apagar servidor</button>
+    <span id="shutdownMsg"></span>
+</div>
+
+<script src="/app.js"></script>
+<script>
+    const API_URL = 'https://ec2-54-227-126-222.compute-1.amazonaws.com:5000';
+
+    (async function checkSession() {
+        const token = localStorage.getItem('session_token');
+        const user  = localStorage.getItem('session_user');
+        if (!token) { window.location.href = '/login.html'; return; }
+        try {
+            const r = await fetch(API_URL + '/api/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!r.ok) {
+                localStorage.removeItem('session_token');
+                localStorage.removeItem('session_user');
+                window.location.href = '/login.html';
+                return;
+            }
+        } catch (e) { /* modo degradado */ }
+        document.getElementById('sessionUser').textContent = user || 'usuario';
+    })();
+
+    function goTo(url) {
+        window.location.href = url;
+    }
+
+    async function doLogout() {
+        const token = localStorage.getItem('session_token');
+        try {
+            await fetch(API_URL + '/api/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+        } catch (e) {}
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('session_user');
+        window.location.href = '/login.html';
+    }
+</script>
+</body>
+</html>
