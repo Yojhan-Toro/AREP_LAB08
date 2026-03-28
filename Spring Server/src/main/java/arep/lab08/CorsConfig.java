@@ -15,15 +15,10 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
-                            // Local
+
                             "http://localhost:35000",
-                            "https://localhost:35000",
-                            // AWS — Máquina 2 Apache
-                            "http://ec2-44-208-167-208.compute-1.amazonaws.com:35000",
-                            "https://ec2-44-208-167-208.compute-1.amazonaws.com:35000",
-                            // AWS — Máquina 1 Proxy (el browser ve esta URL)
-                            "http://ec2-100-55-41-160.compute-1.amazonaws.com",
-                            "https://ec2-100-55-41-160.compute-1.amazonaws.com"
+                            "http://ec2-3-210-205-235.compute-1.amazonaws.com:35000"
+
                         )
                         .allowedMethods("GET", "POST", "OPTIONS")
                         .allowedHeaders("*")

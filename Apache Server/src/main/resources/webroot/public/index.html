@@ -52,14 +52,34 @@
 
 <script src="/app.js"></script>
 <script>
-    const API_URL = 'https://ec2-54-227-126-222.compute-1.amazonaws.com:5000';
+    // ✅ Servidor principal y de respaldo
+    const API_URLS = [
+        'http://localhost:5000',
+        'http://localhost:5001'
+    ];
+
+    // Intenta la petición contra cada servidor hasta que uno responda
+    async function fetchWithFallback(path, options = {}) {
+        for (const base of API_URLS) {
+            try {
+                const res = await fetch(base + path, {
+                    ...options,
+                    signal: AbortSignal.timeout(3000)
+                });
+                return res;
+            } catch (e) {
+                console.warn('[Fallback] ' + base + ' no disponible, probando siguiente...');
+            }
+        }
+        throw new Error('Ningún servidor de autenticación disponible');
+    }
 
     (async function checkSession() {
         const token = localStorage.getItem('session_token');
         const user  = localStorage.getItem('session_user');
         if (!token) { window.location.href = '/login.html'; return; }
         try {
-            const r = await fetch(API_URL + '/api/me', {
+            const r = await fetchWithFallback('/api/me', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             if (!r.ok) {
@@ -68,7 +88,7 @@
                 window.location.href = '/login.html';
                 return;
             }
-        } catch (e) { /* modo degradado */ }
+        } catch (e) { /* modo degradado: deja pasar si ambos caen */ }
         document.getElementById('sessionUser').textContent = user || 'usuario';
     })();
 
@@ -79,7 +99,7 @@
     async function doLogout() {
         const token = localStorage.getItem('session_token');
         try {
-            await fetch(API_URL + '/api/logout', {
+            await fetchWithFallback('/api/logout', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });

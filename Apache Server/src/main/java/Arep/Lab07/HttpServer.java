@@ -1,7 +1,16 @@
 package Arep.Lab07;
 
-import java.net.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,9 +35,8 @@ public class HttpServer {
         PUBLIC_PATHS.add("/shutdown");
     }
 
-    // URL de la Máquina 3 (Spring) para validar tokens
-    private static final String AUTH_URL =
-        "https://ec2-54-227-126-222.compute-1.amazonaws.com:5000/api/me";
+    private static final String AUTH_URL_PRIMARY = "http://localhost:5000/api/me";
+    private static final String AUTH_URL_BACKUP  = "http://ec2-98-92-114-133.compute-1.amazonaws.com:5000/api/me";
 
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(10);
     private static volatile boolean running = true;
@@ -97,8 +105,16 @@ public class HttpServer {
 
     static boolean validateToken(String token) {
         if (token == null || token.isEmpty()) return false;
+
+        if (tryValidate(token, AUTH_URL_PRIMARY)) return true;
+
+        System.out.println("[Auth] Servidor principal caído, intentando respaldo en 5001...");
+        return tryValidate(token, AUTH_URL_BACKUP);
+    }
+
+    private static boolean tryValidate(String token, String authUrl) {
         try {
-            URL url = new URL(AUTH_URL);
+            URL url = new URL(authUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -108,7 +124,7 @@ public class HttpServer {
             conn.disconnect();
             return status == 200;
         } catch (Exception e) {
-            System.err.println("[Auth] Error validating token: " + e.getMessage());
+            System.err.println("[Auth] Error con " + authUrl + ": " + e.getMessage());
             return false;
         }
     }
