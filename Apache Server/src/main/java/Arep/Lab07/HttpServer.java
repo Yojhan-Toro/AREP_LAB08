@@ -35,8 +35,8 @@ public class HttpServer {
         PUBLIC_PATHS.add("/shutdown");
     }
 
-    private static final String AUTH_URL_PRIMARY = "http://localhost:5000/api/me";
-    private static final String AUTH_URL_BACKUP  = "http://ec2-98-92-114-133.compute-1.amazonaws.com:5000/api/me";
+    // URL del Spring Server para validar tokens
+    private static final String AUTH_URL_PRIMARY = "http://ec2-98-92-114-133.compute-1.amazonaws.com:5000/api/me";
 
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(10);
     private static volatile boolean running = true;
@@ -105,11 +105,7 @@ public class HttpServer {
 
     static boolean validateToken(String token) {
         if (token == null || token.isEmpty()) return false;
-
-        if (tryValidate(token, AUTH_URL_PRIMARY)) return true;
-
-        System.out.println("[Auth] Servidor principal caído, intentando respaldo en 5001...");
-        return tryValidate(token, AUTH_URL_BACKUP);
+        return tryValidate(token, AUTH_URL_PRIMARY);
     }
 
     private static boolean tryValidate(String token, String authUrl) {

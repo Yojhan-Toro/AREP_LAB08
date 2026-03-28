@@ -18,7 +18,6 @@ public class CorsConfig {
 
                             "http://localhost:35000",
                             "http://ec2-3-210-205-235.compute-1.amazonaws.com:35000"
-
                         )
                         .allowedMethods("GET", "POST", "OPTIONS")
                         .allowedHeaders("*")

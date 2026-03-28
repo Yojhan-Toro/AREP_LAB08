@@ -52,48 +52,24 @@
 </div>
 
 <script>
-    // ✅ Servidor principal y de respaldo
-    const API_URLS = [
-        'http://localhost:5000',
-        'http://localhost:5001'
-    ];
+    const API_URL = 'http://ec2-98-92-114-133.compute-1.amazonaws.com:5000';
 
-    // Intenta una petición contra la lista de servidores en orden,
-    // devuelve {url, response} del primero que responda
-    async function fetchWithFallback(path, options = {}) {
-        for (const base of API_URLS) {
-            try {
-                const res = await fetch(base + path, {
-                    ...options,
-                    signal: AbortSignal.timeout(3000) // 3s timeout por servidor
-                });
-                return res; // devuelve el primero que responda (aunque sea 401)
-            } catch (e) {
-                console.warn('[Fallback] ' + base + ' no disponible, probando siguiente...');
-            }
-        }
-        throw new Error('Ningún servidor de autenticación está disponible');
-    }
-
-    // Al cargar: si ya hay token, valídalo contra algún servidor
-    (async function checkExistingToken() {
-        const savedToken = localStorage.getItem('session_token');
-        if (!savedToken) return;
-        try {
-            const r = await fetchWithFallback('/api/me', {
-                headers: { 'Authorization': 'Bearer ' + savedToken }
-            });
+    const savedToken = localStorage.getItem('session_token');
+    if (savedToken) {
+        fetch(API_URL + '/api/me', {
+            headers: { 'Authorization': 'Bearer ' + savedToken }
+        }).then(r => {
             if (r.ok) {
                 window.location.href = '/index.html';
             } else {
                 localStorage.removeItem('session_token');
                 localStorage.removeItem('session_user');
             }
-        } catch (e) {
+        }).catch(() => {
             localStorage.removeItem('session_token');
             localStorage.removeItem('session_user');
-        }
-    })();
+        });
+    }
 
     async function doLogin() {
         const username   = document.getElementById('username').value.trim();
@@ -110,7 +86,7 @@
         loadingMsg.textContent = 'Verificando...';
 
         try {
-            const response = await fetchWithFallback('/api/login', {
+            const response = await fetch(API_URL + '/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -129,7 +105,7 @@
 
         } catch (e) {
             loadingMsg.textContent = '';
-            errorMsg.textContent = 'No se pudo conectar a ningún servidor de autenticación.';
+            errorMsg.textContent = 'No se pudo conectar al servidor de autenticación.';
         }
     }
 

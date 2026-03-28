@@ -158,6 +158,9 @@ java -jar Lab06-0.0.1-SNAPSHOT.jar > apache.log 2>&1 &
 ```
 
 ---
+## Video demostrativo
+
+![demo](VideoAREP.gif)
 
 ## Construido con
 
